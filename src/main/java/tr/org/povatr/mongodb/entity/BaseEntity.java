@@ -1,21 +1,26 @@
 package tr.org.povatr.mongodb.entity;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import lombok.*;
+import org.springframework.data.domain.AbstractAggregateRoot;
+import org.springframework.data.mongodb.core.mapping.Document;
+import tr.org.povatr.mongodb.event.EntityEvent;
 
 import javax.persistence.Id;
-import java.util.Date;
 
 @Data
-@SuperBuilder
+@AllArgsConstructor
 @NoArgsConstructor
-public class BaseEntity {
+@Builder
+@EqualsAndHashCode(callSuper = true)
+@Document
+public class BaseEntity<T extends BaseEntity<T>> extends AbstractAggregateRoot<BaseEntity<T>> {
 
     @Id
     private String id;
-    private Date createdDate;
-    private String createdBy;
-    private Date updatedDate;
-    private String updatedBy;
+
+    private Metadata metadata = new Metadata();
+
+    public void registerEvent(EntityEvent<T> event) {
+        super.registerEvent(event);
+    }
 }
