@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.repository.support.SimpleReactiveMongoRe
 import reactor.core.publisher.Mono;
 import tr.org.povatr.mongodb.entity.BaseEntity;
 import tr.org.povatr.mongodb.enums.EntityEventType;
-import tr.org.povatr.mongodb.event.EntityEvent;
+import tr.org.povatr.mongodb.event.listener.EntityEventListener;
 
 import java.io.Serializable;
 import java.util.List;
@@ -18,46 +18,49 @@ public class CommonReactiveMongoRepositoryImpl<T extends BaseEntity<T>, ID exten
 
     private final MongoEntityInformation<T, ID> entityInformation;
     private final ReactiveMongoOperations mongoOperations;
+    private final EntityEventListener<T, ID> entityEventListener;
 
     public CommonReactiveMongoRepositoryImpl(MongoEntityInformation<T, ID> entityInformation, ReactiveMongoOperations mongoOperations) {
         super(entityInformation, mongoOperations);
         this.entityInformation = entityInformation;
         this.mongoOperations = mongoOperations;
+        this.entityEventListener = new EntityEventListener<>();
+    }
+
+    @Override
+    public <S extends T> Mono<S> save(S entity) {
+        return super.save(entity).doOnSuccess(ent -> entityEventListener.emitEvent(ent, EntityEventType.SAVED));
     }
 
     @Override
     public Mono<Void> deleteById(ID id) {
-        return mongoOperations.findAndRemove(queryById(id), entityInformation.getJavaType()).doOnSuccess(ent -> register(ent, EntityEventType.DELETED)).then();
+        return mongoOperations.findAndRemove(queryById(id), entityInformation.getJavaType()).switchIfEmpty(Mono.error(RuntimeException::new)).doOnSuccess(ent -> entityEventListener.emitEvent(ent, EntityEventType.DELETED)).then();
     }
 
     @Override
     public Mono<Void> delete(T entity) {
-        return mongoOperations.findAndRemove(queryById(getId(entity)), entityInformation.getJavaType()).doOnSuccess(ent -> register(ent, EntityEventType.DELETED)).then();
+        return mongoOperations.findAndRemove(queryById(getId(entity)), entityInformation.getJavaType()).switchIfEmpty(Mono.error(RuntimeException::new)).doOnSuccess(ent -> entityEventListener.emitEvent(ent, EntityEventType.DELETED)).then();
     }
 
     @Override
     public Mono<Void> deleteAllById(Iterable<? extends ID> ids) {
         Query query = queryByIds(ids);
-        return mongoOperations.findAllAndRemove(query, entityInformation.getJavaType()).doOnNext(ent -> register(ent, EntityEventType.DELETED)).then();
+        return mongoOperations.findAllAndRemove(query, entityInformation.getJavaType()).switchIfEmpty(Mono.error(RuntimeException::new)).doOnNext(ent -> entityEventListener.emitEvent(ent, EntityEventType.DELETED)).then();
     }
 
     @Override
     public Mono<Void> deleteAll(Iterable<? extends T> entities) {
         List<ID> ids = StreamSupport.stream(entities.spliterator(), false).map(this::getId).toList();
-        return mongoOperations.findAllAndRemove(queryByIds(ids), entityInformation.getJavaType()).doOnNext(ent -> register(ent, EntityEventType.DELETED)).then();
+        return mongoOperations.findAllAndRemove(queryByIds(ids), entityInformation.getJavaType()).switchIfEmpty(Mono.error(RuntimeException::new)).doOnNext(ent -> entityEventListener.emitEvent(ent, EntityEventType.DELETED)).then();
     }
 
     @Override
     public Mono<Void> deleteAll() {
-        return mongoOperations.findAllAndRemove(queryForAll(), entityInformation.getJavaType()).doOnNext(ent -> register(ent, EntityEventType.DELETED)).then();
+        return mongoOperations.findAllAndRemove(queryForAll(), entityInformation.getJavaType()).switchIfEmpty(Mono.error(RuntimeException::new)).doOnNext(ent -> entityEventListener.emitEvent(ent, EntityEventType.DELETED)).then();
     }
 
     private Query queryById(ID id) {
         return new Query(Criteria.where(getIdProperty()).is(id));
-    }
-
-    private void register(T event, EntityEventType type) {
-        event.registerEvent(EntityEvent.<T>builder().type(type).entity(event).build());
     }
 
     private Query queryForAll() {

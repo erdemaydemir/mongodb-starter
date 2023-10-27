@@ -13,6 +13,7 @@ import tr.org.povatr.mongodb.enums.EntityEventType;
 @Builder
 public class EntityEvent<T extends BaseEntity<T>> {
 
+    private String id;
     private T entity;
     private EntityEventType type;
 }
