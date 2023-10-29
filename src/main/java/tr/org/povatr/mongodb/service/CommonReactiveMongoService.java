@@ -1,18 +1,41 @@
 package tr.org.povatr.mongodb.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tr.org.povatr.mongodb.repository.CommonReactiveMongoRepository;
 import tr.org.povatr.mongodb.entity.BaseEntity;
 
-public interface CommonReactiveMongoService<T extends BaseEntity<T>> {
+import java.io.Serializable;
+import java.util.Map;
 
-    Mono<T> findById(String id);
+@RequiredArgsConstructor
+public abstract class CommonReactiveMongoService<T extends BaseEntity<T>, ID extends Serializable> {
 
-    Flux<T> findAll();
+    private final CommonReactiveMongoRepository<T, ID> commonReactiveMongoRepository;
 
-    Mono<T> save(T entity);
+    public Mono<T> findById(ID id) {
+        return commonReactiveMongoRepository.findById(id);
+    }
 
-    Mono<T> update(String id, T entity);
+    public Flux<T> findAll() {
+        return commonReactiveMongoRepository.findAll();
+    }
 
-    Mono<Void> delete(String id);
+    public Mono<T> save(T entity) {
+        return commonReactiveMongoRepository.save(entity);
+    }
+
+    public Mono<T> update(ID id, T entity) {
+        return commonReactiveMongoRepository.update(id, entity);
+    }
+
+    public Mono<T> update(ID id, Map<String, Object> fieldUpdates) {
+        return commonReactiveMongoRepository.updateFields(id, fieldUpdates);
+    }
+
+    public Mono<Void> deleteById(ID id) {
+        return commonReactiveMongoRepository.deleteById(id);
+    }
 }
