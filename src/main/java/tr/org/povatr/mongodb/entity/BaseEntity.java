@@ -1,22 +1,22 @@
 package tr.org.povatr.mongodb.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 
-import javax.persistence.Id;
+import javax.persistence.Embedded;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-@Document
-public class BaseEntity<T extends BaseEntity<T>> {
+@Getter
+@Setter
+public class BaseEntity {
 
     @Id
     private String id;
 
-    private final Metadata metadata = new Metadata();
+    @Embedded
+    private Metadata metadata = new Metadata();
+
+    @Version
+    private Long version;
 }

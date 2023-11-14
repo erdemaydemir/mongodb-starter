@@ -1,19 +1,18 @@
 package tr.org.povatr.mongodb.event;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.bson.Document;
 import tr.org.povatr.mongodb.entity.BaseEntity;
 import tr.org.povatr.mongodb.enums.EntityEventType;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 @Builder
-public class EntityEvent<T extends BaseEntity<T>> {
+public class EntityEvent<T extends BaseEntity> {
 
-    private String id;
     private T entity;
     private EntityEventType type;
+    private Document query;
 }
