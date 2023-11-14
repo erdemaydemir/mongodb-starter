@@ -1,26 +1,22 @@
 package tr.org.povatr.mongodb.entity;
 
-import lombok.*;
-import org.springframework.data.domain.AbstractAggregateRoot;
-import org.springframework.data.mongodb.core.mapping.Document;
-import tr.org.povatr.mongodb.event.EntityEvent;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 
-import javax.persistence.Id;
+import javax.persistence.Embedded;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-@EqualsAndHashCode(callSuper = true)
-@Document
-public class BaseEntity<T extends BaseEntity<T>> extends AbstractAggregateRoot<BaseEntity<T>> {
+@Getter
+@Setter
+public class BaseEntity {
 
     @Id
     private String id;
 
+    @Embedded
     private Metadata metadata = new Metadata();
 
-    public void registerEvent(EntityEvent<T> event) {
-        super.registerEvent(event);
-    }
+    @Version
+    private Long version;
 }
